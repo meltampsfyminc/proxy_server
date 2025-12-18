@@ -1,0 +1,41 @@
+# suricata/suricata.yaml
+%YAML 1.1
+---
+
+# Run in IPS mode
+runmode: ips
+af-packet:
+  - interface: eth0
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
+    use-mmap: yes
+    tpacket-v3: yes
+
+# Rules configuration
+default-rule-path: /etc/suricata/rules
+rule-files:
+  - suricata.rules
+  - emerging-web_server.rules
+  - emerging-web_client.rules
+
+# Logging
+outputs:
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      types:
+        - alert
+        - http
+        - dns
+        - tls
+  - alert-debug:
+      enabled: yes
+      filename: alert-debug.log
+  - http-log:
+      enabled: yes
+      filename: http.log
+  - tls-log:
+      enabled: yes
+      filename: tls.log

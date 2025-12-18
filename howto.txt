@@ -1,0 +1,21 @@
+Key Features:
+Squid Proxy: Caching, access control, logging
+
+Snort/Suricata: Intrusion Prevention/Detection
+
+ELK Stack: Centralized logging and monitoring
+
+ICAP Support: Optional content filtering
+
+Rule Updates: Regular threat intelligence updates
+
+To Use:
+Clone the configuration files
+
+Run chmod +x setup.sh && ./setup.sh
+
+Configure your browser/OS to use proxy localhost:3128
+
+Monitor via Kibana at http://localhost:5601
+
+This setup provides enterprise-grade proxy with security monitoring capabilities in Docker containers.

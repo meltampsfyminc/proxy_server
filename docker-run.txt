@@ -1,0 +1,18 @@
+# Run Squid proxy
+docker run -d \
+  --name squid-proxy \
+  -p 3128:3128 \
+  -v $(pwd)/squid.conf:/etc/squid/squid.conf \
+  -v $(pwd)/cache:/var/spool/squid \
+  ubuntu/squid:latest
+
+# Run Snort in IPS mode
+docker run -d \
+  --name snort-ips \
+  --network host \
+  --cap-add=NET_ADMIN \
+  --cap-add=NET_RAW \
+  -v $(pwd)/snort.conf:/etc/snort/snort.conf \
+  -v $(pwd)/rules:/etc/snort/rules \
+  blacktop/snort:latest \
+  snort -c /etc/snort/snort.conf -i eth0 -Q -A console
