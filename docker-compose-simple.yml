@@ -1,0 +1,29 @@
+# docker-compose-simple.yml
+version: '3.8'
+
+services:
+  squid-proxy:
+    image: ubuntu/squid:latest
+    container_name: squid-proxy
+    ports:
+      - "3128:3128"
+    volumes:
+      - ./squid/squid.conf:/etc/squid/squid.conf
+      - ./squid/logs:/var/log/squid
+      - ./squid/cache:/var/spool/squid
+    network_mode: "host"  # Use host network for internet access
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    sysctls:
+      - net.ipv4.ip_forward=1
+    cap_add:
+      - NET_ADMIN  # For potential transparent proxy setup
+    restart: unless-stopped
+    command: >
+      /bin/bash -c "
+      # Enable IP forwarding
+      echo 1 > /proc/sys/net/ipv4/ip_forward &&
+      # Start squid
+      squid -f /etc/squid/squid.conf -N
+      "
