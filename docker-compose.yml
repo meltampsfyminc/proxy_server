@@ -1,6 +1,8 @@
-version: '3.8'
+# docker-compose.yml
+
 
 services:
+  # Squid Proxy
   squid-proxy:
     image: ubuntu/squid:latest
     container_name: squid-proxy
@@ -8,18 +10,75 @@ services:
       - "3128:3128"
     volumes:
       - ./squid/squid.conf:/etc/squid/squid.conf
-      - ./cache:/var/spool/squid
+      - ./squid/logs:/var/log/squid
+      - ./squid/cache:/var/spool/squid
+    networks:
+      - proxy-network
     restart: unless-stopped
 
-  snort-ips:
+  # Snort IPS/IDS
+  snort-ids:
     image: blacktop/snort:latest
-    container_name: snort-ips
+    container_name: snort-ids
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    ports:
+      - "3129:3129"  # Snort monitoring port
+    volumes:
+      - ./snort/snort.conf:/etc/snort/snort.conf
+      - ./snort/rules:/etc/snort/rules
+      - ./snort/logs:/var/log/snort
+    networks:
+      - proxy-network
+    command: >
+      snort -c /etc/snort/snort.conf -i eth0 -A console
+    restart: unless-stopped
+
+  # OR Suricata IPS/IDS (Alternative)
+  suricata-ids:
+    image: jasonish/suricata:latest
+    container_name: suricata-ids
     network_mode: "host"
     cap_add:
       - NET_ADMIN
       - NET_RAW
+      - SYS_NICE
     volumes:
-      - ./snort/snort.conf:/etc/snort/snort.conf
-      - ./snort/rules:/etc/snort/rules
-    command: snort -c /etc/snort/snort.conf -i eth0 -Q -A console
+      - ./suricata/suricata.yaml:/etc/suricata/suricata.yaml
+      - ./suricata/rules:/etc/suricata/rules
+      - ./suricata/logs:/var/log/suricata
+    command: >
+      -c /etc/suricata/suricata.yaml
+      -i eth0
     restart: unless-stopped
+
+  # ELK Stack for Logging & Monitoring (Optional)
+  elasticsearch:
+    image: elasticsearch:8.10.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes:
+      - ./elasticsearch/data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - proxy-network
+
+  kibana:
+    image: kibana:8.10.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - proxy-network
+    depends_on:
+      - elasticsearch
+
+networks:
+  proxy-network:
+    driver: bridge
